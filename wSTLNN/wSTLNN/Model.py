@@ -33,15 +33,22 @@ class TL_NN(nn.Module):
         # print(np.shape(self.grph_sftmax))
         self.tmp_sftmin = F.softmin(self.grph_sftmax, 0)  # [16, numData]
         self.tmp_sftmax = F.softmax(self.grph_sftmin, 0)  # [16, numData]
+        row, column = np.shape(self.tmp_sftmax)
+        self.x_cond = self.tmp_sftmax
+        for i in range(0, row):
+            for j in range(0, column):
+                if self.tmp_sftmax[i][j] >= 0.5:
+                    self.x_cond[i][j] = self.tmp_sftmin[i][j]
+
         # print(np.shape(self.tmp_sftmax))
-        self.x_sftmax = torch.max(self.tmp_sftmin, self.tmp_sftmax)  # [16, numData]
+        # self.x_sftmax = torch.max(self.tmp_sftmin, self.tmp_sftmax)  # [16, numData]
         # print(np.shape(self.x_sftmax))
         self.A_abs = torch.abs(self.A)
         self.A_sm = self.A_abs / torch.sum(self.A_abs)
         self.A_sm_nonzr = self.A_sm
-        self.wsx = self.A_sm_nonzr * self.x_sftmax * self.r_a
+        self.wsx = self.A_sm_nonzr * self.x_cond * self.r_a
         # print(np.shape(self.wsx))
-        self.weisum = torch.sum(self.A_sm_nonzr * self.x_sftmax, 0)
+        self.weisum = torch.sum(self.A_sm_nonzr * self.x_cond, 0)
         self.xrtn = torch.sum(self.wsx, 0) / self.weisum
         # print(np.shape(self.xrtn))
         print([self.t, self.A, self.b, self.t2, self.b2])

@@ -201,7 +201,7 @@ def main():
 
     #sensitivity, specificity, positive_pred_value, negative_pred_value, auc \
     #    = Evaluate_measure(tp, fp, tn, fn)
-    print('Accuracy is {}%'.format(test_accu))
+    print('Accuracy is {}%'.format(test_accu*100))
 
 
 if __name__ == "__main__":
