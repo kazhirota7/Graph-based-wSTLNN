@@ -31,28 +31,56 @@ def Read_data(train_path, test_path):
 
 # dataframe to data and label
 def Dataframe_to_Xy(df, data_len):
-    labelcol = df['Occupancy'].to_list()
-    c1 = df.iloc[:, 1:6].to_numpy()
+    labelcol = df['Output'].to_list()
+    c1 = df.iloc[:, 1:5].to_numpy()
     X = []
     y = []
 
     i = 0
-    while i < len(labelcol):
+    while i <= len(labelcol) - data_len:
         cur_label = labelcol[i]
-        label_dur = labelcol[i:i + data_len]
-        dif_sign = len(set(label_dur))
-        if dif_sign == 1 and {cur_label} == set(label_dur):
-            X.append(c1[i:i + data_len, :].astype(float))
-            y.append(cur_label)
-        i = i + data_len
+        # label_dur = labelcol[i:i + data_len]
+        # dif_sign = len(set(label_dur))
+        # if dif_sign == 1 and {cur_label} == set(label_dur):
+        X.append(c1[i:i + data_len, :].astype(float))
+        y.append(cur_label)
+        i += 1
     return X, y
 
 
 # Training and test data, label
-def GetXy(train_path, test_path, data_len):
-    train_df, test_df = Read_data(train_path, test_path)
-    X, y = Dataframe_to_Xy(train_df, data_len)
-    Xtest, ytest = Dataframe_to_Xy(test_df, data_len)
+def GetXy(train_paths, test_paths, data_len):
+    train_df_pos, test_df_pos = Read_data(train_paths[0][0], test_paths[0][0])
+    train_df_neg, test_df_neg = Read_data(train_paths[0][1], test_paths[0][1])
+
+    X_pos, y_pos = Dataframe_to_Xy(train_df_pos, data_len)
+    X_neg, y_neg = Dataframe_to_Xy(train_df_neg, data_len)
+
+    X = np.append(X_pos,X_neg, axis=0)
+    # print(np.shape(X))
+    y = np.append(y_pos,y_neg, axis=0)
+
+    Xtest_pos, ytest_pos = Dataframe_to_Xy(test_df_pos, data_len)
+    Xtest_neg, ytest_neg = Dataframe_to_Xy(test_df_neg, data_len)
+    Xtest = np.append(Xtest_pos, Xtest_neg, axis=0)
+    ytest = np.append(ytest_pos, ytest_neg, axis=0)
+    X = np.expand_dims(X, axis=2)
+    Xtest = np.expand_dims(Xtest, axis=2)
+    for i in range(1, len(train_paths)):
+        train_df_pos, test_df_pos = Read_data(train_paths[i][0], test_paths[i][0])
+        train_df_neg, test_df_neg = Read_data(train_paths[i][1], test_paths[i][1])
+        X_pos, y_pos = Dataframe_to_Xy(train_df_pos, data_len)
+        X_neg, y_neg = Dataframe_to_Xy(train_df_neg, data_len)
+        X_cmb = np.expand_dims(np.append(X_pos, X_neg, axis=0), axis=2)
+
+        Xtest_pos, ytest_pos = Dataframe_to_Xy(test_df_pos, data_len)
+        Xtest_neg, ytest_neg = Dataframe_to_Xy(test_df_neg, data_len)
+        Xtest_cmb = np.expand_dims(np.append(Xtest_pos, Xtest_neg, axis=0), axis=2)
+
+        X = np.append(X, X_cmb, axis=2)
+        Xtest = np.append(Xtest, Xtest_cmb, axis=2)
+    # print(np.shape(X))
+
     return X, y, Xtest, ytest
 
 
@@ -83,53 +111,43 @@ def Changelabel(ytest, y, X):
     y10dif_len = y0_len - y1_len
     for i in range(y10dif_len):
         idx = np.random.randint(y1_len)
-        newx = X[y1_pos[idx]] + np.random.randn(16, 5)
-        X = np.concatenate((X, newx.reshape((1, 16, 5))))
+        newx = X[y1_pos[idx]] + np.random.randn(30, 5)
+        X = np.concatenate((X, newx.reshape((1, 30, 5))))
         y.append(1)
     y = np.array(y)
+    ytest = np.array(ytest)
     return X, y, ytest
 
 
 # Split data into training and test
 def Splitdata(train_paths, test_paths, data_len):
-    X_train_tot = []
-    y_train_tot = []
-    Xtest_tot = []
-    ytest_tot = []
     n = len(train_paths) - 1  # number of neighbors
-    for i in range(len(train_paths)):  # append for each node
-        X, y, Xtest, ytest = GetXy(train_paths[i], test_paths[i], data_len)
-        X, y, Xtest, ytest = SlideXy(X, y, Xtest, ytest)
-        X, y, ytest = Changelabel(ytest, y, X)
-        (N, T, M) = np.shape(X)
-        num = list(range(N))
-        random.shuffle(num)
-        X_perm, y_perm = X[np.array(num), :, :], y[np.array(num)]
-        X, y = X_perm, y_perm
-        X_train, y_train = X, y
-        X_total = np.concatenate((X_train, Xtest))
-        y_total = np.concatenate((y_train, np.array(ytest)))
-        N_new = len(X_total)
-        N_train = int(0.8 * N_new)
-        X_train, y_train = X_total[:N_train, :, :], y_total[:N_train]
-        Xtest, ytest = X_total[N_train:, :, :], y_total[N_train:]
-        X_train_tot.append(X_train)
-        y_train_tot.append(y_train)
-        Xtest_tot.append(Xtest)
-        ytest_tot.append(ytest)
-    # print(X_train_tot)
-    # print(np.shape(X_train_tot))
-    X_train_tot = np.reshape(X_train_tot, (N_train, T, n+1, M))  # (batch, time, node, input)
-    # print(np.shape(X_train_tot))
-    # print(np.shape(ytest))
-    y_train_tot = np.transpose(np.reshape(y_train_tot, (-1, )))
-    Xtest_tot = np.reshape(Xtest_tot, (N_new-N_train, T, n+1, M))
-    ytest_tot = np.transpose(np.reshape(ytest_tot, (-1, )))
+    X, y, Xtest, ytest = GetXy(train_paths, test_paths, data_len)
+    # X, y, Xtest, ytest = SlideXy(X, y, Xtest, ytest)
+    X, y, ytest = Changelabel(ytest, y, X)
+    (N, T, _, M) = np.shape(X)
+    num = list(range(N))
+    random.shuffle(num)
+    X_perm, y_perm = X[np.array(num), :, :], y[np.array(num)]
+    X, y = X_perm, y_perm
+    X_train, y_train = X, y
+    X_total = np.concatenate((X_train, Xtest))
+    y_total = np.concatenate((y_train, np.array(ytest)))
+    N_new = len(X_total)
 
-    # y_train_tot = np.reshape(y_train_tot, ())
-    # print(X_train_tot)
-    # print(np.shape(Xtest))
-    return X_train_tot, y_train_tot, Xtest_tot, ytest_tot, T, M, n
+    (Ntest, _, _, _) = np.shape(Xtest)
+    num2 = list(range(Ntest))
+    random.shuffle(num2)
+    Xtest_perm, ytest_perm = Xtest[np.array(num2), :, :], ytest[np.array(num2)]
+    Xtest, ytest = Xtest_perm, ytest_perm
+    X_total = np.concatenate((X_train, Xtest))
+    y_total = np.concatenate((y_train, np.array(ytest)))
+
+    N_train = N
+    X_train, y_train = X_total[:N_train, :, :], y_total[:N_train]
+    Xtest, ytest = X_total[N_train:, :, :], y_total[N_train:]
+
+    return X_train, y_train, Xtest, ytest, T, M, n
 
 
 def Plotdata(X, y):
@@ -154,9 +172,9 @@ def Evaluate_measure(tp, fp, tn, fn):
 
 
 def main():
-    train_paths = ["occupancy_data/datatraining.txt"]
-    test_paths = ["occupancy_data/datatest.txt"]
-    data_len = 16
+    train_paths = [["generated_data/abruzzo(positive)train.txt", "generated_data/abruzzo(negative)train.txt"], ["generated_data/lazio(positive)train.txt", "generated_data/lazio(negative)train.txt"], ["generated_data/marche(positive)train.txt", "generated_data/marche(negative)train.txt"], ["generated_data/molise(positive)train.txt", "generated_data/molise(negative)train.txt"]]
+    test_paths = [["generated_data/abruzzo(positive)test.txt", "generated_data/abruzzo(negative)test.txt"], ["generated_data/lazio(positive)test.txt", "generated_data/lazio(negative)test.txt"], ["generated_data/marche(positive)test.txt", "generated_data/marche(negative)test.txt"], ["generated_data/molise(positive)test.txt", "generated_data/molise(negative)test.txt"]]
+    data_len = 30
     X_train, y_train, Xtest, ytest, T, M, n = Splitdata(train_paths, test_paths, data_len)
     train_size = len(X_train)
     # Plotdata(X_train, y_train)
@@ -199,8 +217,8 @@ def main():
                         tn += 1
                 Perfor_iter.append([tp, fp, tn, fn])
 
-    #sensitivity, specificity, positive_pred_value, negative_pred_value, auc \
-    #    = Evaluate_measure(tp, fp, tn, fn)
+    sensitivity, specificity, positive_pred_value, negative_pred_value, auc \
+        = Evaluate_measure(tp, fp, tn, fn)
     print('Accuracy is {}%'.format(test_accu*100))
 
 
