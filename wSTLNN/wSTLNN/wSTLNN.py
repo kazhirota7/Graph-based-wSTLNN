@@ -9,6 +9,7 @@ import torch
 from torch.autograd import Variable
 import time
 from Model import TL_NN
+from OperatorsModel import TL_NN_Operators
 
 torch.manual_seed(223626)
 np.random.seed(223626)
@@ -17,7 +18,7 @@ np.random.seed(223626)
 # test accuracy
 def Test_accu(tl_nn, X_test, y_test):
     Xtest_pred = tl_nn(Variable(torch.Tensor(X_test)))
-    Xpred_sign = torch.sign(Xtest_pred).detach().numpy()
+    Xpred_sign = torch.sign(Xtest_pred - 0.5).detach().numpy()
     accu = np.sum(Xpred_sign == y_test) / len(y_test)
     return Xpred_sign, accu
 
@@ -175,24 +176,53 @@ def main():
     train_paths = [["generated_data/abruzzo(positive)train.txt", "generated_data/abruzzo(negative)train.txt"], ["generated_data/lazio(positive)train.txt", "generated_data/lazio(negative)train.txt"], ["generated_data/marche(positive)train.txt", "generated_data/marche(negative)train.txt"], ["generated_data/molise(positive)train.txt", "generated_data/molise(negative)train.txt"]]
     test_paths = [["generated_data/abruzzo(positive)test.txt", "generated_data/abruzzo(negative)test.txt"], ["generated_data/lazio(positive)test.txt", "generated_data/lazio(negative)test.txt"], ["generated_data/marche(positive)test.txt", "generated_data/marche(negative)test.txt"], ["generated_data/molise(positive)test.txt", "generated_data/molise(negative)test.txt"]]
     data_len = 30
+    learning_rate = 0.01
+    batch_size = 8
+    Epoch = 80
     X_train, y_train, Xtest, ytest, T, M, n = Splitdata(train_paths, test_paths, data_len)
     train_size = len(X_train)
     # Plotdata(X_train, y_train)
-    tl_nn = TL_NN(T, M, n)
-    learning_rate = 0.001
+    tl_nn_operators = TL_NN_Operators(T, M, n)
+    optimizer_operators = torch.optim.RMSprop(tl_nn_operators.parameters(), lr=learning_rate)
+
+    loss_iter = []
+
+    for epoch in range(Epoch):
+        for d_i in range(train_size // batch_size + 1):
+            rand_idx = np.random.randint(0, train_size, batch_size)
+            X_bt = Variable(torch.Tensor(X_train[rand_idx, :, :, :]))
+            y_bt = Variable(torch.LongTensor(y_train[rand_idx,]))
+            X_btpred = tl_nn_operators(X_bt)
+            k = tl_nn_operators.operators()
+            print(k)
+            # print(X_btpred)
+            # print(y_bt)
+            loss_tlnn = torch.sum(torch.exp(-y_bt * X_btpred))
+            # print(loss_tlnn)
+            optimizer_operators.zero_grad()
+            loss_tlnn.backward()
+            optimizer_operators.step()
+            loss_iter.append(loss_tlnn.detach().numpy())
+
+    learning_rate = 0.025
+    Epoch = 120
+    tl_nn = TL_NN(T, M, n, k)
     optimizer = torch.optim.RMSprop(tl_nn.parameters(), lr=learning_rate)
-    batch_size = 16
-    Epoch = 10
     loss_iter = []
     accu_iter = []
     Perfor_iter = []
+
+
     for epoch in range(Epoch):
         for d_i in range(train_size // batch_size + 1):
             rand_idx = np.random.randint(0, train_size, batch_size)
             X_bt = Variable(torch.Tensor(X_train[rand_idx, :, :, :]))
             y_bt = Variable(torch.LongTensor(y_train[rand_idx,]))
             X_btpred = tl_nn(X_bt)
+            print(X_btpred)
+            # print(y_bt)
             loss_tlnn = torch.sum(torch.exp(-y_bt * X_btpred))
+            # print(loss_tlnn)
             optimizer.zero_grad()
             loss_tlnn.backward()
             optimizer.step()
@@ -200,8 +230,8 @@ def main():
 
             if d_i % 2 == 0:
                 pred_sign, test_accu = Test_accu(tl_nn, Xtest, ytest)
-                print(pred_sign)
-                print(ytest)
+                # print(pred_sign)
+                # print(ytest)
                 accu_iter.append(test_accu)
                 tp, fp, tn, fn = 0, 0, 0, 0
                 for i in range(len(pred_sign)):
