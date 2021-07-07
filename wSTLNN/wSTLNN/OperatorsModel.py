@@ -16,10 +16,10 @@ class TL_NN_Operators(nn.Module):
         self.n = n
         self.t2 = torch.nn.Parameter(1e-5 * torch.ones(n+1,1), requires_grad=True)
         self.b2 = torch.nn.Parameter(torch.randn(1,1), requires_grad=True)
-        self.k1 = torch.nn.Parameter(1e-5 * torch.randn(1,1), requires_grad=True)
-        self.k2 = torch.nn.Parameter(1e-5 * torch.randn(1, 1), requires_grad=True)
-        self.k3 = torch.nn.Parameter(1e-5 * torch.randn(1, 1), requires_grad=True)
-        self.k4 = torch.nn.Parameter(1e-5 * torch.randn(1, 1), requires_grad=True)
+        self.k1 = torch.nn.Parameter(1e-7 * torch.randn(1,1), requires_grad=True)
+        self.k2 = torch.nn.Parameter(1e-7 * torch.randn(1, 1), requires_grad=True)
+        self.k3 = torch.nn.Parameter(1e-7 * torch.randn(1, 1), requires_grad=True)
+        self.k4 = torch.nn.Parameter(1e-7 * torch.randn(1, 1), requires_grad=True)
         self.T = T
 
 
