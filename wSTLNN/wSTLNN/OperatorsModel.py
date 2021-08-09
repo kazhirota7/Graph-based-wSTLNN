@@ -25,10 +25,12 @@ class TL_NN_Operators(nn.Module):
 
     def forward(self,x):
         # print(np.shape(x))
-        zeros1 = torch.zeros((self.T - len(self.A1),1))
-        zeros2 = torch.zeros((self.T - len(self.A2), 1))
-        A1 = torch.cat((self.A1, zeros1), dim=0)
-        A2 = torch.cat((zeros2, self.A2), dim=0)
+        zeros1 = torch.zeros((5,1))
+        zeros2 = torch.zeros((15,1))
+        zeros3 = torch.zeros((15,1))
+        zeros4 = torch.zeros((10,1))
+        A1 = torch.cat((self.A1, zeros2), dim=0)
+        A2 = torch.cat((zeros3, self.A2), dim=0)
         self.A = torch.max(torch.abs(A1), torch.abs(A2))
 
         r_a = torch.matmul(x, self.t) - self.b

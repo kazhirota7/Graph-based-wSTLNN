@@ -10,6 +10,9 @@ from torch.autograd import Variable
 import time
 from Model import TL_NN
 from OperatorsModel import TL_NN_Operators
+import time
+start_time = time.time()
+
 
 torch.manual_seed(223626)
 np.random.seed(223626)
@@ -18,7 +21,7 @@ np.random.seed(223626)
 # test accuracy
 def Test_accu(tl_nn, X_test, y_test):
     Xtest_pred = tl_nn(Variable(torch.Tensor(X_test)))
-    Xpred_sign = torch.sign(Xtest_pred - 0.5).detach().numpy()
+    Xpred_sign = torch.sign(Xtest_pred - 1).detach().numpy()
     accu = np.sum(Xpred_sign == y_test) / len(y_test)
     return Xpred_sign, accu
 
@@ -173,8 +176,14 @@ def Evaluate_measure(tp, fp, tn, fn):
 
 
 def main():
-    train_paths = [["generated_data/abruzzo(positive)train.txt", "generated_data/abruzzo(negative)train.txt"], ["generated_data/lazio(positive)train.txt", "generated_data/lazio(negative)train.txt"], ["generated_data/marche(positive)train.txt", "generated_data/marche(negative)train.txt"], ["generated_data/molise(positive)train.txt", "generated_data/molise(negative)train.txt"]]
-    test_paths = [["generated_data/abruzzo(positive)test.txt", "generated_data/abruzzo(negative)test.txt"], ["generated_data/lazio(positive)test.txt", "generated_data/lazio(negative)test.txt"], ["generated_data/marche(positive)test.txt", "generated_data/marche(negative)test.txt"], ["generated_data/molise(positive)test.txt", "generated_data/molise(negative)test.txt"]]
+    train_paths = [["generated_data/abruzzo(positive)train.txt", "generated_data/abruzzo(negative)train.txt"],
+                   ["generated_data/lazio(positive)train.txt", "generated_data/lazio(negative)train.txt"],
+                   ["generated_data/marche(positive)train.txt", "generated_data/marche(negative)train.txt"],
+                   ["generated_data/molise(positive)train.txt", "generated_data/molise(negative)train.txt"]]
+    test_paths = [["generated_data/abruzzo(positive)test.txt", "generated_data/abruzzo(negative)test.txt"],
+                  ["generated_data/lazio(positive)test.txt", "generated_data/lazio(negative)test.txt"],
+                  ["generated_data/marche(positive)test.txt", "generated_data/marche(negative)test.txt"],
+                  ["generated_data/molise(positive)test.txt", "generated_data/molise(negative)test.txt"]]
     data_len = 30
     learning_rate = 0.01
     batch_size = 8
@@ -205,8 +214,8 @@ def main():
             optimizer_operators.step()
             loss_iter.append(loss_tlnn.detach().numpy())
 
-    learning_rate = 0.01
-    Epoch = 150
+    learning_rate = 0.025
+    Epoch = 180
     tl_nn = TL_NN(T, M, n, k)
     optimizer = torch.optim.RMSprop(tl_nn.parameters(), lr=learning_rate)
     loss_iter = []
@@ -220,7 +229,7 @@ def main():
             X_bt = Variable(torch.Tensor(X_train[rand_idx, :, :, :]))
             y_bt = Variable(torch.LongTensor(y_train[rand_idx,]))
             X_btpred = tl_nn(X_bt)
-            # print(X_btpred)
+            print(X_btpred)
             # print(y_bt)
             loss_tlnn = torch.sum(torch.exp(-y_bt * X_btpred))
             # print(loss_tlnn)
@@ -251,6 +260,7 @@ def main():
     sensitivity, specificity, positive_pred_value, negative_pred_value, auc \
         = Evaluate_measure(tp, fp, tn, fn)
     print('Accuracy is {}%'.format(test_accu*100))
+    print("--- %s seconds ---" % (time.time() - start_time))
 
 
 if __name__ == "__main__":
