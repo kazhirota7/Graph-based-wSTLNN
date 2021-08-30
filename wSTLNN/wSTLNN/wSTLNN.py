@@ -8,8 +8,8 @@ import random
 import torch
 from torch.autograd import Variable
 import time
-from ModelPractice import TL_NN
-from OperatorsModelPractice import TL_NN_Operators
+from Model import TL_NN
+from OperatorsModel import TL_NN_Operators
 import time
 start_time = time.time()
 
