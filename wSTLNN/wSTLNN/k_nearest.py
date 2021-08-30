@@ -1,101 +1,98 @@
-from collections import Counter
-import math
+# Import necessary modules
+from sklearn.neighbors import KNeighborsClassifier
+from sklearn.model_selection import train_test_split
+from sklearn.datasets import load_iris
+from wSTLNN import *
+import numpy as np
+import pandas as pd
+from sklearn.tree import DecisionTreeClassifier # Import Decision Tree Classifier
+from sklearn.model_selection import train_test_split # Import train_test_split function
+from sklearn import metrics #Import scikit-learn metrics module for accuracy calculation
+
+train_paths = [["generated_data/abruzzo(positive)train.txt", "generated_data/abruzzo(negative)train.txt"],
+                   ["generated_data/lazio(positive)train.txt", "generated_data/lazio(negative)train.txt"],
+                   ["generated_data/marche(positive)train.txt", "generated_data/marche(negative)train.txt"],
+                   ["generated_data/molise(positive)train.txt", "generated_data/molise(negative)train.txt"]]
+test_paths = [["generated_data/abruzzo(positive)test.txt", "generated_data/abruzzo(negative)test.txt"],
+                  ["generated_data/lazio(positive)test.txt", "generated_data/lazio(negative)test.txt"],
+                  ["generated_data/marche(positive)test.txt", "generated_data/marche(negative)test.txt"],
+                  ["generated_data/molise(positive)test.txt", "generated_data/molise(negative)test.txt"]]
+# data_len = 30
+#
+#
+# X_train, y_train, Xtest, ytest, T, M, n = Splitdata(train_paths, test_paths, data_len)
+
+# Loading data
+
+# Create feature and target arrays
+# X = irisData.data
+# y = irisData.target
 
 
-def knn(data, query, k, distance_fn, choice_fn):
-    neighbor_distances_and_indices = []
+df1 = pd.read_csv("generated_data/abruzzo(positive)train.txt")
+df2 = pd.read_csv("generated_data/abruzzo(negative)train.txt")
+y_pos_train = df1['Output'].to_list()
+X_pos_train = df1.iloc[:, 1:5].to_numpy()
+y_neg_train = df2['Output'].to_list()
+X_neg_train = df2.iloc[:, 1:5].to_numpy()
 
-    # 3. For each example in the data
-    for index, example in enumerate(data):
-        # 3.1 Calculate the distance between the query example and the current
-        # example from the data.
-        distance = distance_fn(example[:-1], query)
+X_train = np.concatenate((X_pos_train, X_neg_train), axis=0)
+y_train = np.concatenate((y_pos_train, y_neg_train), axis=0)
 
-        # 3.2 Add the distance and the index of the example to an ordered collection
-        neighbor_distances_and_indices.append((distance, index))
+(N, inputs) = np.shape(X_train)
+num = list(range(N))
+random.shuffle(num)
+X_perm, y_perm = X_train[np.array(num),:], y_train[np.array(num)]
+X_train, y_train = X_perm, y_perm
 
-    # 4. Sort the ordered collection of distances and indices from
-    # smallest to largest (in ascending order) by the distances
-    sorted_neighbor_distances_and_indices = sorted(neighbor_distances_and_indices)
+df3 = pd.read_csv("generated_data/abruzzo(positive)test.txt")
+df4 = pd.read_csv("generated_data/abruzzo(negative)test.txt")
+y_pos_test = df3['Output'].to_list()
+X_pos_test = df3.iloc[:, 1:5].to_numpy()
+y_neg_test = df4['Output'].to_list()
+X_neg_test = df4.iloc[:, 1:5].to_numpy()
 
-    # 5. Pick the first K entries from the sorted collection
-    k_nearest_distances_and_indices = sorted_neighbor_distances_and_indices[:k]
+X_test = np.concatenate((X_pos_test, X_neg_test), axis=0)
+y_test = np.concatenate((y_pos_test, y_neg_test), axis=0)
 
-    # 6. Get the labels of the selected K entries
-    k_nearest_labels = [data[i][-1] for distance, i in k_nearest_distances_and_indices]
+(N, inputs) = np.shape(X_test)
+num = list(range(N))
+random.shuffle(num)
+X_perm, y_perm = X_test[np.array(num),:], y_test[np.array(num)]
+X_test, y_test = X_perm, y_perm
 
-    # 7. If regression (choice_fn = mean), return the average of the K labels
-    # 8. If classification (choice_fn = mode), return the mode of the K labels
-    return k_nearest_distances_and_indices, choice_fn(k_nearest_labels)
+# Split into training and test set
+# X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=None)
 
+knn = KNeighborsClassifier(n_neighbors=3)
 
-def mean(labels):
-    return sum(labels) / len(labels)
+knn.fit(X_train, y_train)
 
+# Predict on dataset which model has not seen before
+pred = knn.predict(X_test)
+print(pred)
+true = 0
+false = 0
 
-def mode(labels):
-    return Counter(labels).most_common(1)[0][0]
+for i in range(len(pred)):
+    if pred[i] == y_test[i]:
+        true += 1
+    else:
+        false += 1
+print("KNN:", str(true/(true+false) * 100) + "%")
 
+# Create Decision Tree classifer object
+clf = DecisionTreeClassifier()
 
-def euclidean_distance(point1, point2):
-    sum_squared_distance = 0
-    for i in range(len(point1)):
-        sum_squared_distance += math.pow(point1[i] - point2[i], 2)
-    return math.sqrt(sum_squared_distance)
+# Train Decision Tree Classifer
+clf = clf.fit(X_train,y_train)
 
+#Predict the response for test dataset
+y_pred = clf.predict(X_test)
 
-def main():
-    '''
-    # Regression Data
-    #
-    # Column 0: height (inches)
-    # Column 1: weight (pounds)
-    '''
-    reg_data = [
-        [65.75, 112.99],
-        [71.52, 136.49],
-        [69.40, 153.03],
-        [68.22, 142.34],
-        [67.79, 144.30],
-        [68.70, 123.30],
-        [69.80, 141.49],
-        [70.01, 136.46],
-        [67.90, 112.37],
-        [66.49, 127.45],
-    ]
-
-    # Question:
-    # Given the data we have, what's the best-guess at someone's weight if they are 60 inches tall?
-    reg_query = [60]
-    reg_k_nearest_neighbors, reg_prediction = knn(
-        reg_data, reg_query, k=3, distance_fn=euclidean_distance, choice_fn=mean
-    )
-
-    '''
-    # Classification Data
-    # 
-    # Column 0: age
-    # Column 1: likes pineapple
-    '''
-    clf_data = [
-        [22, 1],
-        [23, 1],
-        [21, 1],
-        [18, 1],
-        [19, 1],
-        [25, 0],
-        [27, 0],
-        [29, 0],
-        [31, 0],
-        [45, 0],
-    ]
-    # Question:
-    # Given the data we have, does a 33 year old like pineapples on their pizza?
-    clf_query = [33]
-    clf_k_nearest_neighbors, clf_prediction = knn(
-        clf_data, clf_query, k=3, distance_fn=euclidean_distance, choice_fn=mode
-    )
-
-
-if __name__ == '__main__':
-    main()
+for i in range(len(y_pred)):
+    if pred[i] == y_test[i]:
+        true += 1
+    else:
+        false += 1
+print("Decision Tree:", str(true/(true+false) * 100) + "%")
