@@ -5,9 +5,9 @@ import numpy as np
 
 
 
-class TL_NN_Operators(nn.Module):
+class GTL_NN_Operators(nn.Module):
     def __init__(self, T, M, n):
-        super(TL_NN_Operators, self).__init__()
+        super(GTL_NN_Operators, self).__init__()
         self.t = torch.nn.Parameter(1e-5 * torch.ones(M, 1),
                                     requires_grad=False)  # coefficients for inputs (s) (number of inputs for each node)
         A1 = torch.rand((7, 1), requires_grad=False)

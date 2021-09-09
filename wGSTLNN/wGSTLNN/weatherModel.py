@@ -6,9 +6,9 @@ import torch.nn.functional as F
 import numpy as np
 
 
-class TL_NN(nn.Module):
+class GTL_NN(nn.Module):
     def __init__(self, T, M, n, k):
-        super(TL_NN,self).__init__()
+        super(GTL_NN, self).__init__()
         self.t = torch.nn.Parameter(1e-5 * torch.ones(M,1), requires_grad=True)
         A1 = torch.rand((7,1),requires_grad=True)
         self.A1 = torch.nn.Parameter(A1)
@@ -37,24 +37,31 @@ class TL_NN(nn.Module):
         r_a = torch.matmul(x, self.t) - self.b
         self.r_a = r_a.reshape(-1, 15, self.n + 1)
 
+        # weights for Ii
         self.A_abs1 = torch.abs(A1)
         self.A_sm1 = self.A_abs1 / torch.sum(self.A_abs1)
 
+        # weights for Iii
         self.A_abs2 = torch.abs(A2)
         self.A_sm2 = self.A_abs2 / torch.sum(self.A_abs2)
 
+        # Spatial weights
         self.A_n_abs = torch.abs(self.A_n)
         self.A_n_sm = self.A_n_abs / torch.sum(self.A_n_abs)
 
+        # Apply temporal operators
         self.tmp_sftmax1 = self.k3 * F.softmax(self.r_a, 1)
         self.tmp_sftmax2 = self.k4 * F.softmax(self.r_a, 1)
 
+        # Apply spatial operators & multiply temporal weights
         self.grph_sftmax1 = self.k1 * F.softmax(self.tmp_sftmax1 * self.A_sm1, 2)
         self.grph_sftmax2 = self.k2 * F.softmax(self.tmp_sftmax2 * self.A_sm2, 2)
 
+        # Multiply spatial weights
         self.grph_sftmax1 = self.grph_sftmax1 * self.A_n_sm
         self.grph_sftmax2 = self.grph_sftmax2 * self.A_n_sm
 
+        # Disjunction of first interval and negation of second interval
         self.x_max = torch.max(self.grph_sftmax1, self.grph_sftmax2 * -1)
 
         self.wsx = self.x_max * self.r_a
@@ -65,7 +72,7 @@ class TL_NN(nn.Module):
         return self.xrtn
 
     def print_properties(self):
-        print("\ninput weights:")
+        print("\ninput predicates:")
         print(self.t)
         print("\ntime weights:")
         print(self.A)

@@ -8,8 +8,8 @@ import random
 import torch
 from torch.autograd import Variable
 import time
-from COVIDModel import TL_NN
-from COVIDOpModel import TL_NN_Operators
+from COVIDModel import GTL_NN
+from COVIDOpModel import GTL_NN_Operators
 import time
 start_time = time.time()
 
@@ -186,14 +186,14 @@ def main():
                   ["generated_data/molise(positive)test.txt", "generated_data/molise(negative)test.txt"]]
     data_len = 30
     learning_rate = 0.005
-    batch_size = 16
-    Epoch = 200
+    batch_size = 8
+    Epoch = 80
 
     X_train, y_train, Xtest, ytest, T, M, n = Splitdata(train_paths, test_paths, data_len)
     train_size = len(X_train)
     # Plotdata(X_train, y_train)
-    tl_nn_operators = TL_NN_Operators(T, M, n)
-    optimizer_operators = torch.optim.RMSprop(tl_nn_operators.parameters(), lr=learning_rate)
+    gtl_nn_operators = GTL_NN_Operators(T, M, n)
+    optimizer_operators = torch.optim.RMSprop(gtl_nn_operators.parameters(), lr=learning_rate)
 
     loss_iter = []
 
@@ -202,8 +202,8 @@ def main():
             rand_idx = np.random.randint(0, train_size, batch_size)
             X_bt = Variable(torch.Tensor(X_train[rand_idx, :, :, :]))
             y_bt = Variable(torch.LongTensor(y_train[rand_idx,]))
-            X_btpred = tl_nn_operators(X_bt)
-            k = tl_nn_operators.operators()
+            X_btpred = gtl_nn_operators(X_bt)
+            k = gtl_nn_operators.operators()
             print(k)
             # print(X_btpred)
             # print(y_bt)
@@ -214,10 +214,10 @@ def main():
             optimizer_operators.step()
             loss_iter.append(loss_tlnn.detach().numpy())
 
-    learning_rate = 0.001
+    learning_rate = 0.0005
     Epoch = 150
-    tl_nn = TL_NN(T, M, n, k)
-    optimizer = torch.optim.RMSprop(tl_nn.parameters(), lr=learning_rate)
+    gtl_nn = GTL_NN(T, M, n, k)
+    optimizer = torch.optim.RMSprop(gtl_nn.parameters(), lr=learning_rate)
     loss_iter = []
     accu_iter = []
     Perfor_iter = []
@@ -228,7 +228,7 @@ def main():
             rand_idx = np.random.randint(0, train_size, batch_size)
             X_bt = Variable(torch.Tensor(X_train[rand_idx, :, :, :]))
             y_bt = Variable(torch.LongTensor(y_train[rand_idx,]))
-            X_btpred = tl_nn(X_bt)
+            X_btpred = gtl_nn(X_bt)
             # print(X_btpred)
             # print(y_bt)
             loss_tlnn = torch.sum(torch.exp(-y_bt * X_btpred))
@@ -239,7 +239,7 @@ def main():
             loss_iter.append(loss_tlnn.detach().numpy())
 
             if d_i % 2 == 0:
-                pred_sign, test_accu = Test_accu(tl_nn, Xtest, ytest)
+                pred_sign, test_accu = Test_accu(gtl_nn, Xtest, ytest)
                 # print(pred_sign)
                 # print(ytest)
                 accu_iter.append(test_accu)
@@ -256,7 +256,7 @@ def main():
                     elif pdlb == -1 and aclb == -1:
                         tn += 1
                 Perfor_iter.append([tp, fp, tn, fn])
-
+        gtl_nn.print_properties()
     sensitivity, specificity, positive_pred_value, negative_pred_value, auc \
         = Evaluate_measure(tp, fp, tn, fn)
     print('Accuracy is {}%'.format(test_accu*100))
