@@ -16,7 +16,7 @@ class TL_NN_Operators(nn.Module):
         self.A2 = torch.nn.Parameter(A2)
         self.b = torch.nn.Parameter(torch.randn(1, 1), requires_grad=False)
         self.n = n
-        A_n = torch.rand((1, n + 1), requires_grad=False) * 1e-5
+        A_n = torch.rand((1, n + 1), requires_grad=False)
         self.A_n = torch.nn.Parameter(A_n, requires_grad=False)
         self.k1 = torch.nn.Parameter(torch.randn(1, 1), requires_grad=True)
         self.k2 = torch.nn.Parameter(torch.randn(1, 1), requires_grad=True)
@@ -26,12 +26,11 @@ class TL_NN_Operators(nn.Module):
 
 
     def forward(self,x):
-        # print(np.shape(x))
-
         # zeros1 = torch.zeros((5, 1))
         zeros2 = torch.zeros((8, 1))
         zeros3 = torch.zeros((7, 1))
         # zeros4 = torch.zeros((10, 1))
+
         A1 = torch.cat((self.A1, zeros2), dim=0)
         A2 = torch.cat((zeros3, self.A2), dim=0)
         self.A = torch.max(torch.abs(A1), torch.abs(A2))
@@ -39,66 +38,37 @@ class TL_NN_Operators(nn.Module):
         r_a = torch.matmul(x, self.t) - self.b
         self.r_a = r_a.reshape(-1, 15, self.n + 1)
 
+        # weights for Ii
         self.A_abs1 = torch.abs(A1)
         self.A_sm1 = self.A_abs1 / torch.sum(self.A_abs1)
 
+        # weights for Iii
         self.A_abs2 = torch.abs(A2)
         self.A_sm2 = self.A_abs2 / torch.sum(self.A_abs2)
 
+        # Spatial weights
         self.A_n_abs = torch.abs(self.A_n)
         self.A_n_sm = self.A_n_abs / torch.sum(self.A_n_abs)
 
+        # Apply temporal operators
         self.tmp_sftmax1 = self.k3 * F.softmax(self.r_a, 1)
         self.tmp_sftmax2 = self.k4 * F.softmax(self.r_a, 1)
 
+        # Apply spatial operators & multiply temporal weights
         self.grph_sftmax1 = self.k1 * F.softmax(self.tmp_sftmax1 * self.A_sm1, 2)
         self.grph_sftmax2 = self.k2 * F.softmax(self.tmp_sftmax2 * self.A_sm2, 2)
-        # self.grph_sftmax1 = torch.matmul(grph_sftmax1, self.t2) - self.b2
-        # self.grph_sftmax2 = torch.matmul(grph_sftmax2, self.t2) - self.b2
-        # # print(np.shape(self.r_a))
-        # self.r_a = torch.matmul(self.r_a, self.t2) - self.b2
-        # print(np.shape(self.r_a))
-        # self.r_a = self.r_a.reshape(30, -1)
-        # self.grph_sftmax1 = self.grph_sftmax1.reshape((30, -1))
-        # self.grph_sftmax2 = self.grph_sftmax2.reshape((30, -1))
-        # print(np.shape(self.grph_sftmax1))
+
+        # Multiply spatial weights
         self.grph_sftmax1 = self.grph_sftmax1 * self.A_n_sm
         self.grph_sftmax2 = self.grph_sftmax2 * self.A_n_sm
-        # print(np.shape(self.tmp_sftmax1))   # negation on softmax
-        # self.grph_sftmax1 = self.grph_sftmax1.reshape(-1, 15, self.n + 1, 1)
-        # self.grph_sftmax2 = self.grph_sftmax2.reshape(-1, 15, self.n + 1, 1)
-        self.x_max = torch.max(self.grph_sftmax1, self.grph_sftmax2 * -1)
 
-        # self.A_sm_nonzr, indices = torch.max(torch.cat((self.A_sm1, self.A_sm2), 1), 1)
-        # self.A_sm_nonzr = self.A_sm_nonzr.reshape(15, 1)
-        # print(np.shape(self.A_sm_nonzr))
-        # print(np.shape(self.x_max))
-        # print(np.shape(self.r_a))
-        # print(np.shape(self.A_n_sm))
+        # Disjunction of first interval and negation of second interval
+        self.x_max = torch.max(self.grph_sftmax1, self.grph_sftmax2)
+
         self.wsx = self.x_max * self.r_a
-        # self.wsx = torch.max(self.wsx1, self.wsx2 * -1)
-        # print (np.shape(self.wsx1))
-
-        # self.weisum = torch.sum(self.A_sm_nonzr * self.x_max, 0)
-        # self.xrtn = torch.sum(self.wsx, 0) / self.weisum
-
         self.weisum = torch.sum(torch.sum(self.x_max, 2), 1)
         self.xrtn = torch.sum(torch.sum(self.wsx, 2), 1) / self.weisum
-        # self.weisum2 = torch.sum(torch.sum(self.A_sm2 * self.tmp_sftmax2 * self.A_n_sm, 2), 1)
-        # self.xrtn2 = torch.sum(torch.sum(self.wsx2, 2), 1) / self.weisum2
-        # self.xrtn1 = self.xrtn1.reshape(-1, 1)
-        # self.xrtn2 = self.xrtn2.reshape(-1, 1)
-        # self.xrtn = torch.max(torch.cat((self.xrtn1, self.xrtn2 * -1), dim=1), 1)
-        # print("\ninput weights:")
-        # print(self.t)
-        # print("\ntime weights:")
-        # print(self.A)
-        # print("\nbias1:")
-        # print(self.b)
-        # print("\nneighbor weights:")
-        # print(self.A_n)
-        # print("\nk values:")
-        # print([self.k1, self.k2, self.k3, self.k4])
+
         return self.xrtn
 
     def operators(self):

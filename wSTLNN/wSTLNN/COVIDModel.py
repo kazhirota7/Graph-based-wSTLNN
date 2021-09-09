@@ -120,4 +120,3 @@ class TL_NN(nn.Module):
         print([self.k1, self.k2, self.k3, self.k4])
 
         return self.xrtn
-        return self.xrtn
