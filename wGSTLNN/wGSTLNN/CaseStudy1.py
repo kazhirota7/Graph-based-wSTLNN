@@ -339,7 +339,7 @@ def main():
         test_paths = test_paths_tot[i]
 
         data_len = 15
-        learning_rate = 0.005
+        learning_rate = 0.002
         batch_size = 16
         Epoch = 75
 
@@ -369,8 +369,8 @@ def main():
                 optimizer_operators.step()
                 loss_iter.append(loss_tlnn.detach().numpy())
 
-        learning_rate = 0.0015
-        Epoch = 200
+        learning_rate = 0.001
+        Epoch = 160
         gtl_nn = GTL_NN(T, M, n, k)
         optimizer = torch.optim.RMSprop(gtl_nn.parameters(), lr=learning_rate)
         loss_iter = []
@@ -412,7 +412,7 @@ def main():
                         elif pdlb == -1 and aclb == -1:
                             tn += 1
                     Perfor_iter.append([tp, fp, tn, fn])
-            gtl_nn.print_properties()
+            # gtl_nn.print_properties()
 
         sensitivity, specificity, positive_pred_value, negative_pred_value, auc \
             = Evaluate_measure(tp, fp, tn, fn)

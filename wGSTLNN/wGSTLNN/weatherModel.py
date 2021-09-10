@@ -18,6 +18,8 @@ class GTL_NN(nn.Module):
         self.n = n
         A_n = torch.rand((1, n+1), requires_grad=True)
         self.A_n = torch.nn.Parameter(A_n)
+        A_disj = 0.5 * torch.ones((2, 1, 1), requires_grad=True)
+        self.A_disj = torch.nn.Parameter(A_disj)
         self.k1 = 1 if k[0] >= 0 else -1
         self.k2 = 1 if k[1] >= 0 else -1
         self.k3 = 1 if k[2] >= 0 else -1
@@ -35,7 +37,7 @@ class GTL_NN(nn.Module):
         self.A = torch.max(torch.abs(A1), torch.abs(A2))
 
         r_a = torch.matmul(x, self.t) - self.b
-        self.r_a = r_a.reshape(-1, 15, self.n + 1)
+        self.r_a = r_a.reshape(-1, 1, 15, self.n + 1)
 
         # weights for Ii
         self.A_abs1 = torch.abs(A1)
@@ -48,6 +50,10 @@ class GTL_NN(nn.Module):
         # Spatial weights
         self.A_n_abs = torch.abs(self.A_n)
         self.A_n_sm = self.A_n_abs / torch.sum(self.A_n_abs)
+
+        # disjunction weights
+        self.A_disj_abs = torch.abs(self.A_disj)
+        self.A_disj_sm = self.A_disj_abs / torch.sum(self.A_disj_abs)
 
         # Apply temporal operators
         self.tmp_sftmax1 = self.k3 * F.softmax(self.r_a, 1)
@@ -62,12 +68,15 @@ class GTL_NN(nn.Module):
         self.grph_sftmax2 = self.grph_sftmax2 * self.A_n_sm
 
         # Disjunction of first interval and negation of second interval
-        self.x_max = torch.max(self.grph_sftmax1, self.grph_sftmax2 * -1)
+        self.grph_sftmax1 = self.grph_sftmax1.reshape(-1, 1, 15, self.n + 1)
+        self.grph_sftmax2 = self.grph_sftmax2.reshape(-1, 1, 15, self.n + 1)
 
-        self.wsx = self.x_max * self.r_a
+        self.x_sftmax = F.softmax(torch.cat((self.grph_sftmax1, self.grph_sftmax2 * -1), 1), 1) * self.A_disj_sm
 
-        self.weisum = torch.sum(torch.sum(self.x_max, 2), 1)
-        self.xrtn = torch.sum(torch.sum(self.wsx, 2), 1) / self.weisum
+        self.wsx = self.x_sftmax * self.r_a
+
+        self.weisum = torch.sum(torch.sum(torch.sum(self.x_sftmax, 3), 2), 1)
+        self.xrtn = torch.sum(torch.sum(torch.sum(self.wsx, 3), 2), 1) / self.weisum
 
         return self.xrtn
 
@@ -82,3 +91,5 @@ class GTL_NN(nn.Module):
         print(self.A_n)
         print("\nk values:")
         print([self.k1, self.k2, self.k3, self.k4])
+        print("\ndisjunction weights:")
+        print(self.A_disj)

@@ -185,9 +185,9 @@ def main():
                   ["generated_data/marche(positive)test.txt", "generated_data/marche(negative)test.txt"],
                   ["generated_data/molise(positive)test.txt", "generated_data/molise(negative)test.txt"]]
     data_len = 30
-    learning_rate = 0.005
+    learning_rate = 0.001
     batch_size = 8
-    Epoch = 80
+    Epoch = 50
 
     X_train, y_train, Xtest, ytest, T, M, n = Splitdata(train_paths, test_paths, data_len)
     train_size = len(X_train)
@@ -214,8 +214,8 @@ def main():
             optimizer_operators.step()
             loss_iter.append(loss_tlnn.detach().numpy())
 
-    learning_rate = 0.0005
-    Epoch = 150
+    learning_rate = 0.001
+    Epoch = 80
     gtl_nn = GTL_NN(T, M, n, k)
     optimizer = torch.optim.RMSprop(gtl_nn.parameters(), lr=learning_rate)
     loss_iter = []

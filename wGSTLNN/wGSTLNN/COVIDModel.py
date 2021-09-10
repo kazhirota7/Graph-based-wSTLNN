@@ -6,22 +6,25 @@ import torch.nn.functional as F
 import numpy as np
 
 
+
 class GTL_NN(nn.Module):
     def __init__(self, T, M, n, k):
         super(GTL_NN, self).__init__()
         self.t = torch.nn.Parameter(1e-5 * torch.ones(M,1), requires_grad=True)
-        A1 = torch.rand((15,1),requires_grad=True)
+        A1 = 0.5 * torch.ones((15,1),requires_grad=True)
         self.A1 = torch.nn.Parameter(A1)
-        A2 = torch.rand((15,1),requires_grad=True)
+        A2 = 0.5 * torch.ones((15,1),requires_grad=True)
         self.A2 = torch.nn.Parameter(A2)
         self.b = torch.nn.Parameter(torch.randn(1,1), requires_grad=True)  # bias for time
         self.n = n
-        A_n = F.softmax(torch.ones((1, n+1), requires_grad=True))
+        A_n = F.softmax(torch.ones((self.n+1), requires_grad=True))
         self.A_n = torch.nn.Parameter(A_n)
         self.k1 = 1 if k[0] >= 0 else -1
         self.k2 = 1 if k[1] >= 0 else -1
         self.k3 = 1 if k[2] >= 0 else -1
         self.k4 = 1 if k[3] >= 0 else -1
+        A_disj = 0.5 * torch.ones((2,1,1), requires_grad=True)
+        self.A_disj = torch.nn.Parameter(A_disj)
         self.T = T
 
 
@@ -41,7 +44,7 @@ class GTL_NN(nn.Module):
         self.A = torch.max(torch.abs(A1), torch.abs(A2))
 
         r_a = torch.matmul(x, self.t) - self.b
-        self.r_a = r_a.reshape(-1, 30, self.n + 1)
+        self.r_a = r_a.reshape(-1, 1, 30, self.n + 1)
 
         self.A_abs1 = torch.abs(A1)
         self.A_sm1 = self.A_abs1 / torch.sum(self.A_abs1)
@@ -52,6 +55,9 @@ class GTL_NN(nn.Module):
         self.A_n_abs = torch.abs(self.A_n)
         self.A_n_sm = self.A_n_abs / torch.sum(self.A_n_abs)
 
+        self.A_disj_abs = torch.abs(self.A_disj)
+        self.A_disj_sm = self.A_disj_abs / torch.sum(self.A_disj_abs)
+
         self.tmp_sftmax1 = self.k3 * F.softmax(self.r_a, 1)
         self.tmp_sftmax2 = self.k4 * F.softmax(self.r_a, 1)
 
@@ -61,12 +67,15 @@ class GTL_NN(nn.Module):
         self.grph_sftmax1 = self.grph_sftmax1 * self.A_n_sm
         self.grph_sftmax2 = self.grph_sftmax2 * self.A_n_sm
 
-        self.x_max = torch.max(self.grph_sftmax1, self.grph_sftmax2 * -1)
+        self.grph_sftmax1 = self.grph_sftmax1.reshape(-1, 1, 30, self.n + 1)
+        self.grph_sftmax2 = self.grph_sftmax2.reshape(-1, 1, 30, self.n + 1)
 
-        self.wsx = self.x_max * self.r_a
+        self.x_sftmax = F.softmax(torch.cat((self.grph_sftmax1, self.grph_sftmax2 * -1), 1), 1) * self.A_disj_sm
 
-        self.weisum = torch.sum(torch.sum(self.x_max, 2), 1)
-        self.xrtn = torch.sum(torch.sum(self.wsx, 2), 1) / self.weisum
+        self.wsx = self.x_sftmax * self.r_a
+
+        self.weisum = torch.sum(torch.sum(torch.sum(self.x_sftmax, 3), 2), 1)
+        self.xrtn = torch.sum(torch.sum(torch.sum(self.wsx, 3), 2),1) / self.weisum
 
         return self.xrtn
 
@@ -81,3 +90,5 @@ class GTL_NN(nn.Module):
         print(self.A_n)
         print("\nk values:")
         print([self.k1, self.k2, self.k3, self.k4])
+        print("\ndisjunction weights:")
+        print(self.A_disj)
