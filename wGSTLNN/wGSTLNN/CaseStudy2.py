@@ -215,7 +215,7 @@ def main():
             loss_iter.append(loss_tlnn.detach().numpy())
 
     learning_rate = 0.001
-    Epoch = 80
+    Epoch = 90
     gtl_nn = GTL_NN(T, M, n, k)
     optimizer = torch.optim.RMSprop(gtl_nn.parameters(), lr=learning_rate)
     loss_iter = []

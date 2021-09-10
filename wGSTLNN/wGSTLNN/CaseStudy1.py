@@ -412,7 +412,7 @@ def main():
                         elif pdlb == -1 and aclb == -1:
                             tn += 1
                     Perfor_iter.append([tp, fp, tn, fn])
-            # gtl_nn.print_properties()
+            gtl_nn.print_properties()
 
         sensitivity, specificity, positive_pred_value, negative_pred_value, auc \
             = Evaluate_measure(tp, fp, tn, fn)

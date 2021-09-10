@@ -17,7 +17,7 @@ class GTL_NN(nn.Module):
         self.A2 = torch.nn.Parameter(A2)
         self.b = torch.nn.Parameter(torch.randn(1,1), requires_grad=True)  # bias for time
         self.n = n
-        A_n = F.softmax(torch.ones((self.n+1), requires_grad=True))
+        A_n = F.softmax(torch.ones((1, self.n+1), requires_grad=True), 1)
         self.A_n = torch.nn.Parameter(A_n)
         self.k1 = 1 if k[0] >= 0 else -1
         self.k2 = 1 if k[1] >= 0 else -1
@@ -82,13 +82,15 @@ class GTL_NN(nn.Module):
     def print_properties(self):
         print("\ninput predicates:")
         print(self.t)
-        print("\ntime weights:")
-        print(self.A)
+        print("\ntime weights1:")
+        print(self.A1 / torch.sum(self.A1, 0))
+        print("\ntime weights2:")
+        print(self.A2 / torch.sum(self.A2, 0))
         print("\nbias1:")
         print(self.b)
         print("\nneighbor weights:")
-        print(self.A_n)
+        print(self.A_n / torch.sum(self.A_n[:, 1:], 1))
         print("\nk values:")
         print([self.k1, self.k2, self.k3, self.k4])
         print("\ndisjunction weights:")
-        print(self.A_disj)
+        print(self.A_disj / torch.sum(self.A_disj, 0))
