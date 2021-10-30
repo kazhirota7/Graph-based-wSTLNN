@@ -187,13 +187,13 @@ def main():
     data_len = 30
     learning_rate = 0.001
     batch_size = 8
-    Epoch = 50
+    Epoch = 40
 
     X_train, y_train, Xtest, ytest, T, M, n = Splitdata(train_paths, test_paths, data_len)
     train_size = len(X_train)
     # Plotdata(X_train, y_train)
     gtl_nn_operators = GTL_NN_Operators(T, M, n)
-    optimizer_operators = torch.optim.RMSprop(gtl_nn_operators.parameters(), lr=learning_rate)
+    optimizer_operators = torch.optim.Adam(gtl_nn_operators.parameters(), lr=learning_rate)
 
     loss_iter = []
 
@@ -215,9 +215,9 @@ def main():
             loss_iter.append(loss_tlnn.detach().numpy())
 
     learning_rate = 0.001
-    Epoch = 90
+    Epoch = 60
     gtl_nn = GTL_NN(T, M, n, k)
-    optimizer = torch.optim.RMSprop(gtl_nn.parameters(), lr=learning_rate)
+    optimizer = torch.optim.Adam(gtl_nn.parameters(), lr=learning_rate)
     loss_iter = []
     accu_iter = []
     Perfor_iter = []

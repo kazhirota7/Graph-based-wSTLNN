@@ -14,7 +14,7 @@ class GTL_NN(nn.Module):
         self.A1 = torch.nn.Parameter(A1)
         A2 = torch.rand((8,1),requires_grad=True)
         self.A2 = torch.nn.Parameter(A2)
-        self.b = torch.nn.Parameter(torch.randn(1,1), requires_grad=True)  # bias for time
+        self.b = torch.nn.Parameter(torch.randn(1,1), requires_grad=True)
         self.n = n
         A_n = torch.rand((1, n+1), requires_grad=True)
         self.A_n = torch.nn.Parameter(A_n)

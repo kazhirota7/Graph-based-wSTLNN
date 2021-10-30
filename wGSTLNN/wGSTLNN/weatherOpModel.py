@@ -19,10 +19,10 @@ class GTL_NN_Operators(nn.Module):
         self.A_n = torch.nn.Parameter(A_n, requires_grad=True)
         A_disj = 0.5 * torch.ones((2, 1, 1), requires_grad=True)
         self.A_disj = torch.nn.Parameter(A_disj)
-        self.k1 = torch.nn.Parameter(torch.randn(1, 1), requires_grad=True)
-        self.k2 = torch.nn.Parameter(torch.randn(1, 1), requires_grad=True)
-        self.k3 = torch.nn.Parameter(torch.randn(1, 1), requires_grad=True)
-        self.k4 = torch.nn.Parameter(torch.randn(1, 1), requires_grad=True)
+        self.k1 = 1e-5*torch.nn.Parameter(torch.randn(1, 1), requires_grad=True)
+        self.k2 = 1e-5*torch.nn.Parameter(torch.randn(1, 1), requires_grad=True)
+        self.k3 = 1e-5*torch.nn.Parameter(torch.randn(1, 1), requires_grad=True)
+        self.k4 = 1e-5*torch.nn.Parameter(torch.randn(1, 1), requires_grad=True)
         self.T = T
 
 

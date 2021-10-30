@@ -339,16 +339,16 @@ def main():
         test_paths = test_paths_tot[i]
 
         data_len = 15
-        learning_rate = 0.002
+        learning_rate = 0.001
         batch_size = 16
-        Epoch = 75
+        Epoch = 40
 
         X_train, y_train, Xtest, ytest, T, M, n = Splitdata(train_paths, test_paths, data_len)
         # print(np.isnan(np.sum(X_train)))
         train_size = len(X_train)
         # Plotdata(X_train, y_train)
         gtl_nn_operators = GTL_NN_Operators(T, M, n)
-        optimizer_operators = torch.optim.RMSprop(gtl_nn_operators.parameters(), lr=learning_rate)
+        optimizer_operators = torch.optim.Adam(gtl_nn_operators.parameters(), lr=learning_rate)
 
         loss_iter = []
 
@@ -359,20 +359,20 @@ def main():
                 y_bt = Variable(torch.LongTensor(y_train[rand_idx,]))
                 X_btpred = gtl_nn_operators(X_bt)
                 k = gtl_nn_operators.operators()
-                # print(k)
-                # print(X_btpred)
-                # print(y_bt)
+                print(k)
+                print(X_btpred)
+                print(y_bt)
                 loss_tlnn = torch.sum(torch.exp(-y_bt * X_btpred))
                 # print(loss_tlnn)
                 optimizer_operators.zero_grad()
-                loss_tlnn.backward()
+                loss_tlnn.backward(retain_graph=True)
                 optimizer_operators.step()
                 loss_iter.append(loss_tlnn.detach().numpy())
 
         learning_rate = 0.001
-        Epoch = 160
+        Epoch = 70
         gtl_nn = GTL_NN(T, M, n, k)
-        optimizer = torch.optim.RMSprop(gtl_nn.parameters(), lr=learning_rate)
+        optimizer = torch.optim.Adam(gtl_nn.parameters(), lr=learning_rate)
         loss_iter = []
         accu_iter = []
         Perfor_iter = []
@@ -384,8 +384,8 @@ def main():
                 X_bt = Variable(torch.Tensor(X_train[rand_idx, :, :, :]))
                 y_bt = Variable(torch.LongTensor(y_train[rand_idx,]))
                 X_btpred = gtl_nn(X_bt)
-                # print(X_btpred)
-                # print(y_bt)
+                print(X_btpred)
+                print(y_bt)
                 loss_tlnn = torch.sum(torch.exp(-y_bt * X_btpred))
                 # print(loss_tlnn)
                 optimizer.zero_grad()
@@ -412,7 +412,7 @@ def main():
                         elif pdlb == -1 and aclb == -1:
                             tn += 1
                     Perfor_iter.append([tp, fp, tn, fn])
-            gtl_nn.print_properties()
+            # gtl_nn.print_properties()
 
         sensitivity, specificity, positive_pred_value, negative_pred_value, auc \
             = Evaluate_measure(tp, fp, tn, fn)
