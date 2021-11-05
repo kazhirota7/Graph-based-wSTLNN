@@ -1,13 +1,24 @@
 # Import necessary modules
 from sklearn.neighbors import KNeighborsClassifier
-from sklearn.model_selection import train_test_split
-from sklearn.datasets import load_iris
 from CaseStudy2 import *
 import numpy as np
 import pandas as pd
 from sklearn.tree import DecisionTreeClassifier # Import Decision Tree Classifier
-from sklearn.model_selection import train_test_split # Import train_test_split function
-from sklearn import metrics #Import scikit-learn metrics module for accuracy calculation
+from sklearn.pipeline import make_pipeline
+from sklearn.preprocessing import StandardScaler
+from sklearn.svm import SVC
+
+def classify(classifier, x_train, y_train, x_test, y_test):
+    true = 0
+    false = 0
+    classifier.fit(x_train, y_train)
+    y_pred = classifier.predict(x_test)
+    for i in range(len(y_pred)):
+        if y_pred[i] == y_test[i]:
+            true += 1
+        else:
+            false += 1
+    return true/(true+false)
 
 train_paths = [["generated_data/abruzzo(positive)train.txt", "generated_data/abruzzo(negative)train.txt"],
                    ["generated_data/lazio(positive)train.txt", "generated_data/lazio(negative)train.txt"],
@@ -17,8 +28,6 @@ test_paths = [["generated_data/abruzzo(positive)test.txt", "generated_data/abruz
                   ["generated_data/lazio(positive)test.txt", "generated_data/lazio(negative)test.txt"],
                   ["generated_data/marche(positive)test.txt", "generated_data/marche(negative)test.txt"],
                   ["generated_data/molise(positive)test.txt", "generated_data/molise(negative)test.txt"]]
-
-## K-nearest neighbors algorithm
 
 # Load training data
 
@@ -56,37 +65,18 @@ random.shuffle(num)
 X_perm, y_perm = X_test[np.array(num),:], y_test[np.array(num)]
 X_test, y_test = X_perm, y_perm
 
-# Learn the trainign data
+print(np.shape(y_test))
+# Classifiers
 
+# KNN
 knn = KNeighborsClassifier(n_neighbors=3)
+print("KNN:", str(classify(knn, X_train,y_train,X_test,y_test) * 100) + "%")
 
-knn.fit(X_train, y_train)
+# Decision Tree Algorithm
 
-# Predict on dataset which model has not seen before
-pred = knn.predict(X_test)
-true = 0
-false = 0
-
-for i in range(len(pred)):
-    if pred[i] == y_test[i]:
-        true += 1
-    else:
-        false += 1
-print("KNN:", str(true/(true+false) * 100) + "%")
-
-## Decision Tree Algorithm
-# Create Decision Tree classifer object
 clf = DecisionTreeClassifier()
+print("Decision Tree:", str(classify(clf, X_train,y_train,X_test,y_test) * 100) + "%")
 
-# Train Decision Tree Classifer
-clf = clf.fit(X_train,y_train)
-
-# Predict the response for test dataset
-y_pred = clf.predict(X_test)
-
-for i in range(len(y_pred)):
-    if pred[i] == y_test[i]:
-        true += 1
-    else:
-        false += 1
-print("Decision Tree:", str(true/(true+false) * 100) + "%")
+# SVM
+svm = make_pipeline(StandardScaler(), SVC(gamma='auto'))
+print("SVM:", str(classify(svm, X_train,y_train,X_test,y_test) * 100) + "%")
