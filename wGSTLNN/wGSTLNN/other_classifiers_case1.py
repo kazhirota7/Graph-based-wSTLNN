@@ -131,24 +131,6 @@ for key in train_paths:
         y_test = np.concatenate((y_test, df2['RainTomorrow'].to_list()), axis=0)
 
 
-
-# train = "weather_data/albury_train.xlsx"
-# test = "weather_data/albury_test.xlsx"
-# total = "AustWeather_zeros.csv"
-#
-#
-# df1 = pd.read_excel(train)
-# df2 = pd.read_excel(test)
-# df3 = pd.read_csv(total)
-# X_train = df3.iloc[:100000, 2:19].to_numpy()
-# X_test = df3.iloc[100000:, 2:19].to_numpy()
-# y_train = df3.iloc[:100000, 19].to_list()
-# y_test = df3.iloc[100000:, 19].to_list()
-# X_train = df1.iloc[:,3:20].to_numpy()
-# X_test = df2.iloc[:,3:20].to_numpy()
-# y_train = df1['RainTomorrow'].to_list()
-# y_test = df2['RainTomorrow'].to_list()
-
 def classify(classifier, x_train, y_train, x_test, y_test):
     true = 0
     false = 0
@@ -161,14 +143,6 @@ def classify(classifier, x_train, y_train, x_test, y_test):
             false += 1
     return true/(true+false)
 
-# coordData = "LatLong.xlsx"
-# neighbors = FindNeighbors(coordData)
-# train_paths_tot = TrainingFiles(neighbors)
-# test_paths_tot = TestFiles(neighbors)
-# data_len = 15
-# X_train, y_train, Xtest, ytest, T, M, n = Splitdata(train_paths_tot[0], test_paths_tot[0], data_len)
-
-print(np.shape(X_train))
 # Classifiers
 
 # KNN
