@@ -10,9 +10,9 @@ class GTL_NN(nn.Module):
     def __init__(self, T, M, n, k):
         super(GTL_NN, self).__init__()
         self.t = torch.nn.Parameter(1e-5 * torch.ones(M,1), requires_grad=True)
-        A1 = torch.rand((7,1),requires_grad=True)
+        A1 = 0.5 * torch.ones((7,1),requires_grad=True)
         self.A1 = torch.nn.Parameter(A1)
-        A2 = torch.rand((8,1),requires_grad=True)
+        A2 = 0.5 * torch.ones((8,1),requires_grad=True)
         self.A2 = torch.nn.Parameter(A2)
         self.b = torch.nn.Parameter(torch.randn(1,1), requires_grad=True)
         self.n = n

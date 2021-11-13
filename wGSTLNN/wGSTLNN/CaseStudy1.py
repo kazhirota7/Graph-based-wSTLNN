@@ -359,9 +359,9 @@ def main():
                 y_bt = Variable(torch.LongTensor(y_train[rand_idx,]))
                 X_btpred = gtl_nn_operators(X_bt)
                 k = gtl_nn_operators.operators()
-                print(k)
-                print(X_btpred)
-                print(y_bt)
+                # print(k)
+                # print(X_btpred)
+                # print(y_bt)
                 loss_tlnn = torch.sum(torch.exp(-y_bt * X_btpred))
                 # print(loss_tlnn)
                 optimizer_operators.zero_grad()
@@ -384,8 +384,8 @@ def main():
                 X_bt = Variable(torch.Tensor(X_train[rand_idx, :, :, :]))
                 y_bt = Variable(torch.LongTensor(y_train[rand_idx,]))
                 X_btpred = gtl_nn(X_bt)
-                print(X_btpred)
-                print(y_bt)
+                # print(X_btpred)
+                # print(y_bt)
                 loss_tlnn = torch.sum(torch.exp(-y_bt * X_btpred))
                 # print(loss_tlnn)
                 optimizer.zero_grad()
@@ -412,7 +412,7 @@ def main():
                         elif pdlb == -1 and aclb == -1:
                             tn += 1
                     Perfor_iter.append([tp, fp, tn, fn])
-            # gtl_nn.print_properties()
+            gtl_nn.print_properties()
 
         sensitivity, specificity, positive_pred_value, negative_pred_value, auc \
             = Evaluate_measure(tp, fp, tn, fn)
