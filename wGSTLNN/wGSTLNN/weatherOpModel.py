@@ -13,7 +13,7 @@ class GTL_NN_Operators(nn.Module):
         self.A1 = torch.nn.Parameter(A1)
         A2 = 0.5 * torch.ones((8, 1), requires_grad=True)
         self.A2 = torch.nn.Parameter(A2)
-        self.b = torch.nn.Parameter(torch.randn(1, 1), requires_grad=True)
+        self.b = torch.nn.Parameter(1e-5 * torch.randn(1, 1), requires_grad=True)
         self.n = n
         A_n = 0.5 * torch.ones((1, n + 1), requires_grad=True)
         self.A_n = torch.nn.Parameter(A_n, requires_grad=True)

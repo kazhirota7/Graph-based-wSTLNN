@@ -15,7 +15,7 @@ class GTL_NN(nn.Module):
         self.A1 = torch.nn.Parameter(A1)
         A2 = 0.5 * torch.ones((15,1),requires_grad=True)
         self.A2 = torch.nn.Parameter(A2)
-        self.b = torch.nn.Parameter(torch.randn(1,1), requires_grad=True)  # bias for time
+        self.b = torch.nn.Parameter(1e-5*torch.randn(1,1), requires_grad=True)  # bias for time
         self.n = n
         A_n = F.softmax(torch.ones((1, self.n+1), requires_grad=True), 1)
         self.A_n = torch.nn.Parameter(A_n)
